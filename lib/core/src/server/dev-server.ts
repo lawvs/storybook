@@ -16,13 +16,14 @@ const dllPath = path.join(__dirname, '../../dll');
 
 const cache = {};
 
-let previewProcess;
-let previewReject;
+let previewProcess: any;
+let previewReject: Function;
 let resolved = false;
 
-const router = new Router();
+// @ts-ignore
+const router: Router = new Router();
 
-export default function (options) {
+export default function (options: any) {
   const configDir = path.resolve(options.configDir);
   const outputDir = options.smokeTest
     ? resolvePathInStorybookCache('public')
@@ -30,8 +31,8 @@ export default function (options) {
   const configType = 'DEVELOPMENT';
 
   const startTime = process.hrtime();
-  let managerTotalTime;
-  let previewTotalTime;
+  let managerTotalTime: [number, number];
+  let previewTotalTime: [number, number];
 
   const managerPromise = loadManagerConfig({
     configType,
@@ -42,6 +43,7 @@ export default function (options) {
     ...options,
   }).then((config) => {
     if (options.debugWebpack) {
+      // @ts-ignore
       logConfig('Manager webpack config', config, logger);
     }
     const managerCompiler = webpack(config);
@@ -57,14 +59,14 @@ export default function (options) {
       logLevel: 'warn',
       clientLogLevel: 'warning',
       noInfo: true,
-    };
+    } as const;
 
     const managerDevMiddlewareInstance = webpackDevMiddleware(
       managerCompiler,
       devMiddlewareOptions
     );
 
-    router.get(/\/static\/media\/.*\..*/, (request, response, next) => {
+    router.get(/\/static\/media\/.*\..*/, (request: any, response: any, next: Function) => {
       response.set('Cache-Control', `public, max-age=31536000`);
       next();
     });
@@ -72,7 +74,7 @@ export default function (options) {
     router.use(managerDevMiddlewareInstance);
 
     return new Promise((resolve, reject) => {
-      managerDevMiddlewareInstance.waitUntilValid((stats) => {
+      managerDevMiddlewareInstance.waitUntilValid((stats: any) => {
         managerTotalTime = process.hrtime(startTime);
 
         if (!stats) {
@@ -97,6 +99,7 @@ export default function (options) {
         ...options,
       }).then((previewConfig) => {
         if (options.debugWebpack) {
+          // @ts-ignore
           logConfig('Preview webpack config', previewConfig, logger);
         }
 
@@ -132,7 +135,7 @@ export default function (options) {
 
         return new Promise((resolve, reject) => {
           previewReject = reject;
-          previewDevMiddlewareInstance.waitUntilValid((stats) => {
+          previewDevMiddlewareInstance.waitUntilValid((stats: any) => {
             resolved = true;
             previewTotalTime = process.hrtime(startTime);
 

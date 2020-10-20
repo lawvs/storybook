@@ -28,7 +28,7 @@ const cache = Cache({
   ns: 'storybook', // Optional. A grouping namespace for items.
 });
 
-const writeStats = async (name, stats) => {
+const writeStats = async (name: string, stats: any) => {
   await fs.writeFile(
     resolvePathInStorybookCache(`public/${name}-stats.json`),
     JSON.stringify(stats.toJson(), null, 2),
@@ -36,13 +36,13 @@ const writeStats = async (name, stats) => {
   );
 };
 
-const getFreePort = (port) =>
+const getFreePort = (port: any) =>
   detectFreePort(port).catch((error) => {
     logger.error(error);
     process.exit(-1);
   });
 
-async function getServer(app, options) {
+async function getServer(app: http.RequestListener, options: any) {
   if (!options.https) {
     return http.createServer(app);
   }
@@ -58,25 +58,27 @@ async function getServer(app, options) {
   }
 
   const sslOptions = {
-    ca: await Promise.all((options.sslCa || []).map((ca) => fs.readFile(ca, 'utf-8'))),
+    ca: await Promise.all((options.sslCa || []).map((ca: string) => fs.readFile(ca, 'utf-8'))),
     cert: await fs.readFile(options.sslCert, 'utf-8'),
     key: await fs.readFile(options.sslKey, 'utf-8'),
   };
 
+  // @ts-ignore
   return https.createServer(sslOptions, app);
 }
 
-async function applyStatic(app, options) {
+async function applyStatic(app: any, options: any) {
   const { staticDir } = options;
 
   let hasCustomFavicon = false;
 
   if (staticDir && staticDir.length) {
     await Promise.all(
-      staticDir.map(async (dir) => {
+      staticDir.map(async (dir: string) => {
         const [currentStaticDir, staticEndpoint] = dir.split(':').concat('/');
         const localStaticPath = path.resolve(currentStaticDir);
 
+        // @ts-ignore
         if (await !fs.exists(localStaticPath)) {
           logger.error(`Error: no such directory to load static files: ${localStaticPath}`);
           process.exit(-1);
@@ -89,6 +91,7 @@ async function applyStatic(app, options) {
 
         const faviconPath = path.resolve(localStaticPath, 'favicon.ico');
 
+        // @ts-ignore
         if (await fs.exists(faviconPath)) {
           hasCustomFavicon = true;
           app.use(favicon(faviconPath));
@@ -102,7 +105,7 @@ async function applyStatic(app, options) {
   }
 }
 
-const updateCheck = async (version) => {
+const updateCheck = async (version: string) => {
   let result;
   const time = Date.now();
   try {
@@ -110,7 +113,7 @@ const updateCheck = async (version) => {
 
     // if last check was more then 24h ago
     if (time - 86400000 > fromCache.time) {
-      const fromFetch = await Promise.race([
+      const fromFetch: any = await Promise.race([
         fetch(`https://storybook.js.org/versions.json?current=${version}`),
         // if fetch is too slow, we won't wait for it
         new Promise((res, rej) => global.setTimeout(rej, 1500)),
@@ -131,13 +134,13 @@ const updateCheck = async (version) => {
 // For this reason, we convert the actual version of the build here so that
 // every place that relies on this data can reference the version of the
 // release notes that we expect to use.
-const getReleaseNotesVersion = (version) => {
+const getReleaseNotesVersion = (version: string) => {
   const { major, minor } = semver.parse(version);
   const { version: releaseNotesVersion } = semver.coerce(`${major}.${minor}`);
   return releaseNotesVersion;
 };
 
-const getReleaseNotesFailedState = (version) => {
+const getReleaseNotesFailedState = (version: string) => {
   return {
     success: false,
     currentVersion: getReleaseNotesVersion(version),
@@ -147,7 +150,7 @@ const getReleaseNotesFailedState = (version) => {
 
 export const RELEASE_NOTES_CACHE_KEY = 'releaseNotesData';
 
-export const getReleaseNotesData = async (currentVersionToParse, fileSystemCache) => {
+export const getReleaseNotesData = async (currentVersionToParse: any, fileSystemCache: any) => {
   let result;
   try {
     const fromCache = await fileSystemCache.get('releaseNotesData', []);
@@ -187,16 +190,16 @@ export const getReleaseNotesData = async (currentVersionToParse, fileSystemCache
   return result;
 };
 
-function listenToServer(server, listenAddr) {
+function listenToServer(server: any, listenAddr: any) {
   let serverResolve = () => {};
-  let serverReject = () => {};
+  let serverReject: Function = () => {};
 
   const serverListening = new Promise((resolve, reject) => {
     serverResolve = resolve;
     serverReject = reject;
   });
 
-  server.listen(...listenAddr, (error) => {
+  server.listen(...listenAddr, (error: any) => {
     if (error) {
       serverReject(error);
     } else {
@@ -207,7 +210,7 @@ function listenToServer(server, listenAddr) {
   return serverListening;
 }
 
-function createUpdateMessage(updateInfo, version) {
+function createUpdateMessage(updateInfo: any, version: string) {
   let updateMessage;
 
   try {
@@ -231,7 +234,7 @@ function createUpdateMessage(updateInfo, version) {
   return updateMessage;
 }
 
-function outputStartupInformation(options) {
+function outputStartupInformation(options: any) {
   const {
     updateInfo,
     version,
@@ -261,6 +264,7 @@ function outputStartupInformation(options) {
       'right-mid': '',
       middle: '',
     },
+    // @ts-ignore
     paddingLeft: 0,
     paddingRight: 0,
     paddingTop: 0,
@@ -287,12 +291,12 @@ function outputStartupInformation(options) {
 
           ${serveMessage.toString()}${updateMessage ? `\n\n${updateMessage}` : ''}
         `,
-      { borderStyle: 'round', padding: 1, borderColor: '#F1618C' }
+      { borderStyle: 'round', padding: 1, borderColor: '#F1618C' } as any
     )
   );
 }
 
-async function outputStats(previewStats, managerStats) {
+async function outputStats(previewStats: any, managerStats: any) {
   if (previewStats) {
     await writeStats('preview', previewStats);
   }
@@ -302,7 +306,7 @@ async function outputStats(previewStats, managerStats) {
   );
 }
 
-function openInBrowser(address) {
+function openInBrowser(address: any) {
   try {
     open(address);
   } catch (error) {
@@ -314,7 +318,7 @@ function openInBrowser(address) {
   }
 }
 
-export async function buildDevStandalone(options) {
+export async function buildDevStandalone(options: any) {
   try {
     const { host, extendServer, packageJson, versionUpdates, releaseNotes } = options;
     const { version } = packageJson;
@@ -375,7 +379,7 @@ export async function buildDevStandalone(options) {
       managerStats,
       managerTotalTime,
       previewTotalTime,
-    } = await storybook(options);
+    } = (await storybook(options)) as any;
 
     app.use(storybookMiddleware);
 
@@ -419,12 +423,12 @@ export async function buildDevStandalone(options) {
     npmLog.heading = '';
 
     if (error instanceof Error) {
-      if (error.error) {
-        logger.error(error.error);
-      } else if (error.stats && error.stats.compilation.errors) {
-        error.stats.compilation.errors.forEach((e) => logger.plain(e));
+      if ((error as any).error) {
+        logger.error((error as any).error);
+      } else if ((error as any).stats && (error as any).stats.compilation.errors) {
+        (error as any).stats.compilation.errors.forEach((e: any) => logger.plain(e));
       } else {
-        logger.error(error);
+        logger.error(error as any);
       }
     }
     logger.line();
@@ -447,7 +451,7 @@ export async function buildDevStandalone(options) {
   }
 }
 
-export async function buildDev({ packageJson, ...loadOptions }) {
+export async function buildDev({ packageJson, ...loadOptions }: any) {
   const cliOptions = await getDevCli(packageJson);
 
   await buildDevStandalone({
