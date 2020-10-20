@@ -10,14 +10,14 @@ import TerserWebpackPlugin from 'terser-webpack-plugin';
 
 import themingPaths from '@storybook/theming/paths';
 import uiPaths from '@storybook/ui/paths';
-
-import { version } from '../../../package.json';
 import { getManagerHeadHtml } from '../utils/template';
 import { loadEnv } from '../config/utils';
 
 import babelLoader from './babel-loader-manager';
 import { resolvePathInStorybookCache } from '../utils/resolve-path-in-sb-cache';
 import es6Transpiler from '../common/es6Transpiler';
+
+const { version } = require('../../../package.json');
 
 const coreDirName = path.dirname(require.resolve('@storybook/core/package.json'));
 // TODO: improve node_modules detection
@@ -38,7 +38,7 @@ export default async ({
   versionCheck,
   releaseNotesData,
   presets,
-}) => {
+}: any) => {
   const { raw, stringified } = loadEnv();
   const logLevel = await presets.apply('logLevel', undefined);
   const isProd = configType === 'PRODUCTION';
@@ -75,7 +75,8 @@ export default async ({
         : null,
       new HtmlWebpackPlugin({
         filename: `index.html`,
-        chunksSortMode: 'none',
+        // FIXME: `none` isn't a known option
+        chunksSortMode: 'none' as any,
         alwaysWriteToDisk: true,
         inject: false,
         templateParameters: (compilation, files, options) => ({
@@ -170,7 +171,8 @@ export default async ({
                 mangle: false,
                 keep_fnames: true,
               },
-            }),
+              // FIXME: `cache` isn't a known attribute
+            } as any),
           ]
         : [],
     },
